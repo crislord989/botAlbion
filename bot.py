@@ -12,7 +12,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 # Albion Online Data Project API
 BASE_URL = "https://west.albion-online-data.com/api/v2/stats/prices"
-SEARCH_URL = "https://gameinfo.albiononline.com/api/gameinfo/search"
+SEARCH_URL = "https://gameinfo-ams.albiononline.com/api/gameinfo/search"
 RENDER_URL = "https://render.albiononline.com/v1/item"
 
 CITIES = ["Caerleon", "Bridgewatch", "Fort Sterling", "Lymhurst", "Martlock", "Thetford", "Black Market"]
