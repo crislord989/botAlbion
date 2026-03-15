@@ -62,18 +62,22 @@ def get_enchant_from_id(item_id: str) -> int:
 
 
 async def search_items(query: str) -> list[dict]:
-    """Search for items by name using Albion's gameinfo API."""
+    urls = [
+        "https://gameinfo-ams.albiononline.com/api/gameinfo/search",
+        "https://gameinfo.albiononline.com/api/gameinfo/search",
+    ]
     async with aiohttp.ClientSession() as session:
-        params = {"q": query}
-        try:
-            async with session.get(SEARCH_URL, params=params, timeout=aiohttp.ClientTimeout(total=8)) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    return data.get("items", [])
-        except Exception:
-            pass
+        for url in urls:
+            try:
+                async with session.get(url, params={"q": query}, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        items = data.get("items", [])
+                        if items:
+                            return items
+            except Exception:
+                continue
     return []
-
 
 async def get_prices(item_id: str, qualities: str = "1,2,3,4,5") -> list[dict]:
     """Fetch prices for an item from the Albion Online Data Project."""
