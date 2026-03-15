@@ -51,7 +51,7 @@ ITEMS_CACHE = []
 
 async def load_items_cache():
     global ITEMS_CACHE
-    url = "https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.json"
+    url = "https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json"
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
@@ -81,7 +81,6 @@ def get_enchant_from_id(item_id: str) -> int:
 
 
 async def search_items(query: str) -> list[dict]:
-    """Busca items localmente en la cache."""
     query_lower = query.lower()
     results = []
     for item in ITEMS_CACHE:
@@ -94,11 +93,10 @@ async def search_items(query: str) -> list[dict]:
                 "id": item.get("UniqueName", ""),
                 "localizedNames": names,
             })
-        if len(results) >= 10:
-            break
+            if len(results) >= 10:  # <- el break ahora está DENTRO del if
+                break
     print(f"📦 Items encontrados: {len(results)}")
     return results
-
 
 async def get_prices(item_id: str, qualities: str = "1,2,3,4,5") -> list[dict]:
     """Fetch prices for an item from the Albion Online Data Project."""
