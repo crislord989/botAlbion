@@ -80,6 +80,7 @@ async def search_items(query: str) -> list[dict]:
                     print(f"📡 Status: {resp.status} desde {url}")
                     if resp.status == 200:
                         data = await resp.json()
+                        print(f"🧪 Respuesta raw: {json.dumps(data)[:500]}")
                         items = data.get("items", [])
                         print(f"📦 Items encontrados: {len(items)}")
                         if items:
