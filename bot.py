@@ -12,7 +12,6 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 # Albion Online Data Project API
 BASE_URL = "https://west.albion-online-data.com/api/v2/stats/prices"
-SEARCH_URL = "https://gameinfo-ams.albiononline.com/api/gameinfo/search"
 RENDER_URL = "https://render.albiononline.com/v1/item"
 
 CITIES = ["Caerleon", "Bridgewatch", "Fort Sterling", "Lymhurst", "Martlock", "Thetford", "Black Market"]
@@ -46,6 +45,23 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
 
+# Cache de items
+ITEMS_CACHE = []
+
+
+async def load_items_cache():
+    """Carga la lista de items desde ao-bin-dumps al iniciar."""
+    global ITEMS_CACHE
+    url = "https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.json"
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status == 200:
+                    ITEMS_CACHE = await resp.json()
+                    print(f"✅ Cache cargada: {len(ITEMS_CACHE)} items")
+        except Exception as e:
+            print(f"❌ Error cargando cache: {e}")
+
 
 def format_price(price: int) -> str:
     """Format price with thousands separator."""
@@ -62,33 +78,24 @@ def get_enchant_from_id(item_id: str) -> int:
 
 
 async def search_items(query: str) -> list[dict]:
-    urls = [
-        "https://gameinfo-ams.albiononline.com/api/gameinfo/search",
-        "https://gameinfo-sgp.albiononline.com/api/gameinfo/search",
-        "https://gameinfo.albiononline.com/api/gameinfo/search",
-    ]
-    async with aiohttp.ClientSession() as session:
-        for url in urls:
-            try:
-                print(f"🔍 Intentando: {url} con query: {query}")
-                async with session.get(
-                    url,
-                    params={"q": query},
-                    timeout=aiohttp.ClientTimeout(total=10),
-                    headers={"User-Agent": "Mozilla/5.0"}
-                ) as resp:
-                    print(f"📡 Status: {resp.status} desde {url}")
-                    if resp.status == 200:
-                        data = await resp.json()
-                        print(f"🧪 Respuesta raw: {json.dumps(data)[:500]}")
-                        items = data.get("items", [])
-                        print(f"📦 Items encontrados: {len(items)}")
-                        if items:
-                            return items
-            except Exception as e:
-                print(f"❌ Error en {url}: {e}")
-                continue
-    return []
+    """Busca items localmente en la cache."""
+    query_lower = query.lower()
+    results = []
+    for item in ITEMS_CACHE:
+        names = item.get("LocalizedNames") or {}
+        en_name = names.get("EN-US", "").lower()
+        es_name = names.get("ES-ES", "").lower()
+        item_id = item.get("UniqueName", "").lower()
+        if query_lower in en_name or query_lower in es_name or query_lower in item_id:
+            results.append({
+                "id": item.get("UniqueName", ""),
+                "localizedNames": names,
+            })
+        if len(results) >= 10:
+            break
+    print(f"📦 Items encontrados: {len(results)}")
+    return results
+
 
 async def get_prices(item_id: str, qualities: str = "1,2,3,4,5") -> list[dict]:
     """Fetch prices for an item from the Albion Online Data Project."""
@@ -119,8 +126,6 @@ def build_price_embed(item_name: str, item_id: str, prices_data: list[dict]) -> 
         color=embed_color,
     )
 
-    # Item icon
-    base_id = item_id.split("@")[0]
     embed.set_thumbnail(url=f"{RENDER_URL}/{item_id}.png")
 
     # Group by city, take best (lowest sell / highest buy) per quality
@@ -143,7 +148,6 @@ def build_price_embed(item_name: str, item_id: str, prices_data: list[dict]) -> 
         if city not in city_data:
             continue
         qualities_data = city_data[city]
-        # Filter out entries with no data
         valid = {q: v for q, v in qualities_data.items() if v["sell"] > 0 or v["buy"] > 0}
         if not valid:
             continue
@@ -188,7 +192,6 @@ async def precio(
 ):
     await interaction.response.defer(thinking=True)
 
-    # Search for the item
     results = await search_items(item)
     if not results:
         await interaction.followup.send(
@@ -197,7 +200,6 @@ async def precio(
         )
         return
 
-    # Take the first result
     found = results[0]
     item_id = found.get("id", "")
     item_name = found.get("localizedNames", {}).get("ES-ES") or found.get("localizedNames", {}).get("EN-US") or item_id
@@ -207,7 +209,6 @@ async def precio(
 
     embed = build_price_embed(item_name, item_id, prices_data)
 
-    # Add buttons
     view = ItemView(item_id, item_name, results)
     await interaction.followup.send(embed=embed, view=view)
 
@@ -274,14 +275,12 @@ class ItemView(discord.ui.View):
         self.search_results = search_results
         self.current_index = 0
 
-        # Botón de link (debe estar aquí dentro)
         self.add_item(discord.ui.Button(
             label="🌐 Ver en web",
             style=discord.ButtonStyle.link,
             url="https://www.albiononline2d.com/en/item/id/"
         ))
 
-        # Add select if multiple results
         if len(search_results) > 1:
             options = []
             for i, r in enumerate(search_results[:10]):
@@ -329,6 +328,7 @@ class ItemSelect(discord.ui.Select):
 @bot.event
 async def on_ready():
     await tree.sync()
+    await load_items_cache()
     print(f"✅ Bot conectado como {bot.user} (ID: {bot.user.id})")
     print("📡 Comandos sincronizados con Discord.")
     await bot.change_presence(
