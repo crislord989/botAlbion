@@ -64,18 +64,28 @@ def get_enchant_from_id(item_id: str) -> int:
 async def search_items(query: str) -> list[dict]:
     urls = [
         "https://gameinfo-ams.albiononline.com/api/gameinfo/search",
+        "https://gameinfo-sgp.albiononline.com/api/gameinfo/search",
         "https://gameinfo.albiononline.com/api/gameinfo/search",
     ]
     async with aiohttp.ClientSession() as session:
         for url in urls:
             try:
-                async with session.get(url, params={"q": query}, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                print(f"🔍 Intentando: {url} con query: {query}")
+                async with session.get(
+                    url,
+                    params={"q": query},
+                    timeout=aiohttp.ClientTimeout(total=10),
+                    headers={"User-Agent": "Mozilla/5.0"}
+                ) as resp:
+                    print(f"📡 Status: {resp.status} desde {url}")
                     if resp.status == 200:
                         data = await resp.json()
                         items = data.get("items", [])
+                        print(f"📦 Items encontrados: {len(items)}")
                         if items:
                             return items
-            except Exception:
+            except Exception as e:
+                print(f"❌ Error en {url}: {e}")
                 continue
     return []
 
