@@ -61,7 +61,7 @@ async def load_items_cache():
                     print(f"✅ Cache cargada: {len(ITEMS_CACHE)} items")
                     # Debug: ver estructura del primer item
                     if ITEMS_CACHE:
-                        print(f"🧪 Ejemplo item: {json.dumps(ITEMS_CACHE[0])[:500]}")
+                        print(f"🧪 Claves disponibles: {list(ITEMS_CACHE[0].keys())}")
         except Exception as e:
             print(f"❌ Error cargando cache: {e}")
 
