@@ -296,7 +296,7 @@ class ItemView(discord.ui.View):
 
     @discord.ui.button(label="🔄 Actualizar", style=discord.ButtonStyle.secondary)
     async def refresh(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
+        await interaction.response.defer() 
         prices_data = await get_prices(self.item_id)
         embed = build_price_embed(self.item_name, self.item_id, prices_data)
         await interaction.edit_original_response(embed=embed, view=self)
@@ -333,7 +333,7 @@ async def on_ready():
     print(f"✅ Bot conectado como {bot.user} (ID: {bot.user.id})")
     print("📡 Comandos sincronizados con Discord.")
     await bot.change_presence(
-        activity=discord.Activity(type=discord.ActivityType.watching, name="el mercado de Albion 📈")
+        activity=discord.Activity(type=discord.ActivityType.watching, name="Analizando con IA mi skibidi >:)")
     )
 
 
