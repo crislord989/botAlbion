@@ -57,7 +57,8 @@ async def load_items_cache():
         try:
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
                 if resp.status == 200:
-                    ITEMS_CACHE = await resp.json()
+                    text = await resp.text()
+                    ITEMS_CACHE = json.loads(text)
                     print(f"✅ Cache cargada: {len(ITEMS_CACHE)} items")
         except Exception as e:
             print(f"❌ Error cargando cache: {e}")
