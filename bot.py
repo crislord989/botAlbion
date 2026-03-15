@@ -259,6 +259,13 @@ class ItemView(discord.ui.View):
         self.search_results = search_results
         self.current_index = 0
 
+        # Botón de link (debe estar aquí dentro)
+        self.add_item(discord.ui.Button(
+            label="🌐 Ver en web",
+            style=discord.ButtonStyle.link,
+            url="https://www.albiononline2d.com/en/item/id/"
+        ))
+
         # Add select if multiple results
         if len(search_results) > 1:
             options = []
@@ -278,10 +285,6 @@ class ItemView(discord.ui.View):
         prices_data = await get_prices(self.item_id)
         embed = build_price_embed(self.item_name, self.item_id, prices_data)
         await interaction.edit_original_response(embed=embed, view=self)
-
-    @discord.ui.button(label="🌐 Ver en web", style=discord.ButtonStyle.link, url="https://www.albiononline2d.com/en/item/id/")
-    async def web_link(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass  # Link button handles itself
 
 
 class ItemSelect(discord.ui.Select):
