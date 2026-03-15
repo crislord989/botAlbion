@@ -50,7 +50,6 @@ ITEMS_CACHE = []
 
 
 async def load_items_cache():
-    """Carga la lista de items desde ao-bin-dumps al iniciar."""
     global ITEMS_CACHE
     url = "https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.json"
     async with aiohttp.ClientSession() as session:
@@ -60,6 +59,9 @@ async def load_items_cache():
                     text = await resp.text()
                     ITEMS_CACHE = json.loads(text)
                     print(f"✅ Cache cargada: {len(ITEMS_CACHE)} items")
+                    # Debug: ver estructura del primer item
+                    if ITEMS_CACHE:
+                        print(f"🧪 Ejemplo item: {json.dumps(ITEMS_CACHE[0])[:500]}")
         except Exception as e:
             print(f"❌ Error cargando cache: {e}")
 
